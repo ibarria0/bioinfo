@@ -1,4 +1,6 @@
-import re
+import itertools
+
+nucleotides = set("AGCT")
 
 def distance(string,other_string):
     count = 0
@@ -22,24 +24,37 @@ def max_kmers(kmers):
 def find_kmers(genome,k):
     return {genome[idx:k+idx] for idx,char in enumerate(genome) if (len(genome) > idx+k)}
 
-def reduce_kmers(kmers,d):
-    reduced = {kmer:[] for kmer in kmers}
-    for kmer in kmers:
-        for other_kmer in kmers:
-            if is_mismatch(kmer,other_kmer,d) and kmer != other_kmer:
-                reduced[kmer].append(other_kmer)
-    return reduced
+def possible_kmers(k):
+    return itertools.product(nucleotides,repeat=k)
+
+def possible_missmatches(kmer,d):
+    nodes = set([kmer])
+    for i in range(d):
+        for node in list(nodes):
+            nodes.update(expand(node))
+    return nodes
+
+def expand(kmer):
+    nodes = set()
+    for i,v in enumerate(kmer):
+        t = list(kmer)
+        other = nucleotides.difference(set(v))
+        for char in other:
+            t[i] = char
+            nodes.add(''.join(t))
+    return nodes
 
 
 
-#genome,k,d = input().split()
-#k = int(k)
-#d = int(d)
+genome,k,d = input().split()
+k = int(k)
+d = int(d)
 
-kmers = find_kmers('ACGTTGCATGTCGCATGATGCATGAGAGCT',4)
-reduced = reduce_kmers(kmers,1)
-print(kmers)
-print(reduced)
-print(max_kmers(reduced))
+kmers = {''.join(kmer):0 for kmer in possible_kmers(k)}
+for index,window in windows(genome,k):
+    for kmer in possible_missmatches(window,d):
+        kmers[kmer] = kmers[kmer] + 1
+print(max_kmers(kmers))
+
 
 
